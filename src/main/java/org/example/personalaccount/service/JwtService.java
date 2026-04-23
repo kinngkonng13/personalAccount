@@ -3,6 +3,7 @@ package org.example.personalaccount.service;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
@@ -34,14 +35,23 @@ public class JwtService {
                 .getSubject();
     }
 
+    private Date extractExpiration(String token) {
+        return Jwts.parser()
+                .setSigningKey(key)
+                .parseClaimsJws(token)
+                .getBody()
+                .getExpiration();
+    }
+
+    private boolean isTokenExpired(String token) {
+        return extractExpiration(token).before(new Date());
+    }
+
     // Проверка, не просрочен ли
-    public boolean isTokenValid(String token) {
-        try {
-            Jwts.parser().setSigningKey(key).parseClaimsJws(token);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
+    public boolean isTokenValid(String token, UserDetails userDetails) {
+        final String email = extractEmail(token);
+
+        return email.equals(userDetails.getUsername()) && !isTokenExpired(token);
     }
 }
 
