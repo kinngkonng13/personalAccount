@@ -3,6 +3,7 @@ package org.example.personalaccount.dto;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
+// Класс - контейнер для данных пользователя
 public class RegisterRequest {
     @NotBlank(message = "Email не может быть пустым")
     @Email(message = "Email должен быть корректным")

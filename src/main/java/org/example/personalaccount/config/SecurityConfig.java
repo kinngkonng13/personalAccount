@@ -21,26 +21,27 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 //Отключаем Спринг Сисуритцу
-@Configuration
-@EnableWebSecurity
-@RequiredArgsConstructor
+@Configuration // Указывает Spring, что внутри находятся определения бинов. Их нужно создать и настроить при запуске
+@EnableWebSecurity // Включает модуль безопасности
+@RequiredArgsConstructor // Генерирует конструктор для final полей
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
     private final CustomUserDetailsService userDetailsService;
-    //private final AuthenticationProvider authenticationProvider;
+
 
     @Bean
+    // Настраивает цепочку фильтров
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> {})
+                .cors(cors -> {}) // Активирует поддержку CORS, нужно, чтобы фронт общался с бэком
                 .csrf(csrf -> csrf.disable()) // Отключаем для REST API
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll() // Разрешаем логин и регистрацию без токена
                         .anyRequest().authenticated() // Все остальное — только по токену
                 )
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // Никаких сессий на сервере!
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // Никаких сессий на сервере
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class); // Наш фильтр идет ПЕРВЫМ
@@ -51,11 +52,12 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-
-        configuration.setAllowedOrigins(List.of("http://localhost:5173")); // Порт из вашего скриншота
-
+        // Список разрешенных адресов
+        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
+        // Список разрешенных действий
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
+        // Разрешает передавать заголовок
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -65,14 +67,16 @@ public class SecurityConfig {
     }
 
     @Bean
+    // Находит пользователя и проверяет пароль
     public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder());
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService); // Пустые скобки!
 
+        authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }
 
     @Bean
+    // Создает инструмент для шифрования
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
